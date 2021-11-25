@@ -7,23 +7,26 @@ FILES = ../Input
 CFLAGS = -Wall -no-pie -fPIE -g -I$(INCLUDE)
 
 # Αρχεία .o
-INCL = $(INCLUDE)/
-OBJS = mapcol.o $(MODULES)/
+INCL = $(INCLUDE)/s_memory.h
+OBJS = reading.o $(MODULES)/s_memory.o
+OBJS1 = writing.o $(MODULES)/s_memory.o
 
 # the executable program
-EXEC = 
+EXEC = reading
+EXEC1 = writing
 
 # parameters
 ARGS =
 
-$(EXEC): $(OBJS) $(INCL)
-	gcc $(OBJS) -o $(EXEC)
+$(EXEC) $(EXEC1): $(OBJS) $(OBJS1) $(INCL)
+	gcc -lpthread -pthread $(OBJS) -o $(EXEC)
+	gcc -lpthread -pthread $(OBJS1) -o $(EXEC1)
 
-$(EXEC1): $(OBJS1)
-	gcc $(OBJS1) -o $(EXEC1)
+# $(EXEC1): $(OBJS1)
+#	gcc $(OBJS1) -o $(EXEC1)
 
 clean:
-	rm -f $(OBJS) $(EXEC)
+	rm -f $(OBJS) $(OBJS1) $(EXEC) $(EXEC1)
 
 
 run: $(EXEC)
