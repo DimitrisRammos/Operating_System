@@ -3,17 +3,88 @@
 
 int main(int argc, char* argv[])
 {   
+ 
+    srand(time(NULL));
+    if( argc != 3)
+    {
+        printf("WRONG INPUT FROM ARGS!!!\n");
+        exit(EXIT_FAILURE);    
+    }
+
+
+
+    //i will create 2 semaphores
+    sem_t *sem_parent = sem_open( SEM_PARENT_PROCESS, 0);
+    if(sem_parent == SEM_FAILED)
+    {
+        perror("sem_open/parent");
+        exit(EXIT_FAILURE);
+    }
+
+    sem_t *sem_child = sem_open( SEM_CHILD_PROCESS, 0);
+    if(sem_child == SEM_FAILED)
+    {
+        perror("sem_open/child");
+        exit(EXIT_FAILURE);
+    }
+
+
+
+    char* block = attach_memory_block( FILENAME, BLOCK_SIZE);
+    if(block == NULL)
+    {
+        printf("ERRORRR \n");
+        return -1;
+    }
+
+
+    
+
+
+    int N = atoi(argv[1]);
+    int Lines = atoi(argv[2]);
+    
+
+    for( int i = 0; i < N; i++)
+    {   
+        
+        sem_wait(sem_child);
+        printf("oci\n");
+        int random = rand()%Lines + 1;
+        
+        char* line = malloc(sizeof(char));
+        sprintf(line,"%d",random);
+        strncpy(block,line,BLOCK_SIZE);
+        printf("Hello i am process and i want line %d\n",random);
+        
+        free(line);
+        
+        sem_post(sem_parent);
+    }
+
+    sem_close(sem_child);
+    sem_close(sem_parent);
+    detach_memory_block(block);
+
+    return 0;
+
+
+}
+
+
+
+
+#include "inclu.h"
+#include "shared_memory.h"
+
+int main(int argc, char* argv[])
+{   
     if( argc != 4)
     {
         printf("WRONG INPUT FROM ARGS!!!\n");
         exit(EXIT_FAILURE);
     }
 
-
-
-    sem_unlink(SEM_CHILD_PROCESS);
-    sem_unlink(SEM_PARENT_PROCESS);
-    sem_unlink(SEM_CHILD2_PROCESS);
 
 
 
@@ -32,15 +103,6 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    sem_t *sem_child_2 = sem_open( SEM_CHILD2_PROCESS ,O_CREAT,0660,0);
-    if(sem_child_2 == SEM_FAILED)
-    {
-        perror("sem_open/child2");
-        exit(EXIT_FAILURE);
-    }
-
-
-
     //open file
     //and i will find how much is the line in the file
     char* filename = argv[1];
@@ -54,13 +116,13 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    char ch[101];
+    char ch[100];
     int lines = 0;
     while(fgets(ch, 100, in_file))
     {
         lines++;
-        
     }
+
     //convert the Lines from int to string for input in the next prorgram(child_process)
     char* Lines = malloc(sizeof(char));
     sprintf(Lines,"%d",lines);
@@ -101,57 +163,24 @@ int main(int argc, char* argv[])
     int N = atoi(argv[3]);
     int P = K*N;
     while(P>0)
-    {   
+    {   printf("kapa\n");
 
-        
+
+
         sem_wait( sem_parent);
+
+
 
 
 
         if(strlen(block) > 0)
         {   
-            int input = atoi(block);
+            int input = block[0];
             bool done = (strcmp(block,"quit") == 0);
             block[0] = 0;
-            printf("Parent process: To paidi mou thelei tin grammi %d\n",input);
-            
-            if(done){break;}
-
-            in_file = fopen(filename,"r");
-    
-            if( in_file == NULL)
-            {
-                perror("file FAILED");
-                exit(EXIT_FAILURE);
-            }
-
-            char ch[101];
-            int l = 0;
-            while(fgets(ch, 100, in_file))
-            {
-                l++;
-                if(l == input)
-                {   
-                    
-                    int size = strlen(ch) - 1;
-                    if(ch[size] == '\n' && l != lines)
-                    {
-                        ch[size] = '\0';
-                    }
-                    strncpy(block,ch,BLOCK_SIZE);
-
-                    printf("Parent process: Your line is: %s\n",ch);
-                    break;
-                }
-            }
-
-            fclose(in_file);
-
-        
-        
-        
+            if(done){break;} 
+            printf("HELLO he are your father and input = %d\n",input);
         }
-
         P--;
 
 
@@ -159,7 +188,7 @@ int main(int argc, char* argv[])
 
         
         sem_post( sem_child);
-        sem_post(sem_child_2);
+    
     }
     
 
@@ -173,10 +202,7 @@ int main(int argc, char* argv[])
     
 
     sem_close(sem_child);
-    sem_close(sem_child_2);
     sem_close(sem_parent);
-
-
     detach_memory_block(block);
     free(Lines);
 }

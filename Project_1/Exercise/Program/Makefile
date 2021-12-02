@@ -7,16 +7,16 @@ FILES = ../Input
 CFLAGS = -Wall -no-pie -fPIE -g -I$(INCLUDE)
 
 # Αρχεία .o
-INCL = $(INCLUDE)/
-OBJS = program.o
-OBJS1 = child_process.o
+INCL = $(INCLUDE)/inclu.h $(INCLUDE)/shared_memory.h
+OBJS = program.o $(MODULES)/shared_memory.o
+OBJS1 = child_process.o $(MODULES)/shared_memory.o
 
 # the executable program
 EXEC = program
 EXEC1 = child_process
 
 # parameters
-ARGS = 1 10 10
+ARGS = file.txt 10 10
 
 $(EXEC) $(EXEC1): $(OBJS) $(OBJS1) $(INCL)
 	gcc -lpthread -pthread $(OBJS) -o $(EXEC)
