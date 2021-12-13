@@ -17,7 +17,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+//child process
 #define CHILD_PROGRAM "./child_process" 
+
+//semaphores
 #define SEM_PARENT_PROCESS "/parent"
 #define SEM_CHILD_PROCESS "/child"
 #define SEM_CHILD2_PROCESS "/child2"

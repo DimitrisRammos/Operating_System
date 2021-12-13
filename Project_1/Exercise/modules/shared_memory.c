@@ -1,3 +1,10 @@
+//////////////////////////////////////////////
+//                                          //
+//              SHARED_MEMORY               //  
+//                                          //
+//////////////////////////////////////////////
+
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -50,15 +57,8 @@ bool detach_memory_block(char *block)
     return(shmdt(block) != IPC_RESULT_ERROR);
 }
 
-//i destroy the memory
-bool destroy_memory_block(char *filename)
-{   
-    int shared_block_id = get_shared_block(filename, 0);
-
-    if(shared_block_id == IPC_RESULT_ERROR)
-    {
-        return NULL;
-    }
-
-    return (shmctl(shared_block_id, IPC_RMID, NULL) != IPC_RESULT_ERROR);
-}
+//////////////////////////////////////////////
+//                                          //
+//                  END                     //  
+//                                          //
+//////////////////////////////////////////////

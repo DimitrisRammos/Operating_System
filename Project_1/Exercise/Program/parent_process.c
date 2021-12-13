@@ -122,7 +122,7 @@ int main(int argc, char* argv[])
         {   
             int input = atoi(block);
             block[0] = 0;
-            printf("Parent process: To paidi mou thelei tin grammi %d\n",input);
+            printf("Parent process- My child want the line with number = %d\n",input);
             
             //ανοιγω το αρχειο
             in_file = fopen(filename,"r");

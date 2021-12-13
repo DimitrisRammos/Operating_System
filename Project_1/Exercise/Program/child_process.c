@@ -54,10 +54,11 @@ int main(int argc, char* argv[])
     int N = atoi(argv[1]);      //Ν ποσες δοσοληψιες θα γινουν
     int Lines = atoi(argv[2]);  //Lines ποσες γραμμες υπαρχουν
     
+    double all_time = 0.0;
     int t1,t2;
     for( int i = 0; i < N; i++)
     {   
-        // t1 = time(NULL);
+        clock_t start_time = clock();
 
         //ριχνω τον σημαφορο 
         sem_wait(sem_child);
@@ -77,13 +78,22 @@ int main(int argc, char* argv[])
         sem_wait(sem_child_2);
         
         printf("Child process: My line is -  %s\n\n\n\n",block);
+
+        //average time
+        clock_t end_time = clock();
+        all_time = all_time + (double)(end_time-start_time)/CLOCKS_PER_SEC;
+        
         sem_post( sem_child);
     }
+
+    printf("For child with pid = %d, it have AverageTime = %d\n\n", getpid(),  all_time/N);
 
     //close semaphores
     sem_close(sem_child);
     sem_close(sem_child_2);
     sem_close(sem_parent);
+
+
     detach_memory_block(block);
 
 
