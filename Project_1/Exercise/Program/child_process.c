@@ -1,9 +1,16 @@
+//////////////////////////////////////////////
+//                                          //
+//              CHILD_PROCESS               //  
+//                                          //
+//////////////////////////////////////////////
+
 #include "inclu.h"
 #include "shared_memory.h"
 
+
 int main(int argc, char* argv[])
 {   
- 
+    
     srand(time(NULL));
     if( argc != 3)
     {
@@ -13,7 +20,7 @@ int main(int argc, char* argv[])
 
 
 
-    //i will create 2 semaphores
+    //i will take 3 semaphores
     sem_t *sem_parent = sem_open( SEM_PARENT_PROCESS, 0);
     if(sem_parent == SEM_FAILED)
     {
@@ -35,7 +42,7 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-
+    //παιρνω την κοινοχρηστη μνημη που χει δημιουργηθει
     char* block = attach_memory_block( FILENAME, BLOCK_SIZE);
     if(block == NULL)
     {
@@ -44,23 +51,24 @@ int main(int argc, char* argv[])
     }
 
 
-    
-
-
-    int N = atoi(argv[1]);
-    int Lines = atoi(argv[2]);
+    int N = atoi(argv[1]);      //Ν ποσες δοσοληψιες θα γινουν
+    int Lines = atoi(argv[2]);  //Lines ποσες γραμμες υπαρχουν
     
     int t1,t2;
     for( int i = 0; i < N; i++)
     {   
-        t1 = time(NULL);
+        // t1 = time(NULL);
+
+        //ριχνω τον σημαφορο 
         sem_wait(sem_child);
-        int random = rand()%Lines + 1;
+        int random = rand()%Lines + 1;  //διαλεγω τυχαια γραμμη
         
+        //γραφω στην κοινοχρηστη μνημη την γραμμη ωστε να γνωριζει
+        //o parent
         char* line = malloc(sizeof(char));
         sprintf(line,"%d",random);
         strncpy(block,line,BLOCK_SIZE);
-        printf("Child process: thelo tin grammi %d\n",random);
+        printf("Child process - with pid = %d  I want the line with number - %d\n", getpid(),random);
         
         free(line);
     
@@ -68,11 +76,11 @@ int main(int argc, char* argv[])
         sem_post(sem_parent);
         sem_wait(sem_child_2);
         
-        printf("Child process: i grammi pou zitisa: %s\n\n\n\n",block);
-        t2 = time(NULL);
-        // printf("t2-t1: %d \n",t2 -t1);
+        printf("Child process: My line is -  %s\n\n\n\n",block);
+        sem_post( sem_child);
     }
 
+    //close semaphores
     sem_close(sem_child);
     sem_close(sem_child_2);
     sem_close(sem_parent);
@@ -80,6 +88,10 @@ int main(int argc, char* argv[])
 
 
     return 0;
-
-
 }
+
+//////////////////////////////////////////////
+//                                          //
+//                  END                     //  
+//                                          //
+//////////////////////////////////////////////

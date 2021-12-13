@@ -1,3 +1,10 @@
+//////////////////////////////////////////////
+//                                          //
+//             PARENT_PROCESS               //  
+//                                          //
+//////////////////////////////////////////////
+
+
 #include "inclu.h"
 #include "shared_memory.h"
 
@@ -10,14 +17,14 @@ int main(int argc, char* argv[])
     }
 
 
-
+    //διαγραφω τυχον σημαφορους με το ιδιο ονομα
     sem_unlink(SEM_CHILD_PROCESS);
     sem_unlink(SEM_PARENT_PROCESS);
     sem_unlink(SEM_CHILD2_PROCESS);
 
 
 
-    //i will create 2 semaphores
+    //i will create 3 semaphores
     sem_t *sem_parent = sem_open( SEM_PARENT_PROCESS,O_CREAT,0660,0);
     if(sem_parent == SEM_FAILED)
     {
@@ -54,6 +61,7 @@ int main(int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
+    //μετραω ποσες γραμμες εχεο τπ αρχειο που μου δινετε
     char ch[101];
     int lines = 0;
     while(fgets(ch, 100, in_file))
@@ -74,6 +82,7 @@ int main(int argc, char* argv[])
     //process
     for( int i = 0; i < K; i++)
     {   
+        //αποθηκευω το pid σε πινακα
         if((pid[i] = fork()) < 0)
         {   
             perror("Failed fork");
@@ -82,6 +91,7 @@ int main(int argc, char* argv[])
 
         if( pid[i] == 0)
         {   
+            //αντικαθιστω το μερος της διεργασιας με ενα αλλο προγραμμα
             if(execl(CHILD_PROGRAM,CHILD_PROGRAM,argv[3], Lines,NULL) < 0)
             {
                 perror("Failed EXECL");
@@ -91,6 +101,7 @@ int main(int argc, char* argv[])
         }
     }
 
+    //δημιουργω με κοινοχρηστη μνημη
     char* block = attach_memory_block( FILENAME, BLOCK_SIZE);
     if(block == NULL)
     {
@@ -99,26 +110,23 @@ int main(int argc, char* argv[])
     }
 
     int N = atoi(argv[3]);
-    int P = K*N;
+    int P = K*N; //το P ειναι ποσα request θα γινουν συνολικα προς το πατερα
     while(P>0)
     {   
 
         
         sem_wait( sem_parent);
 
-
-
+        //διαβαζω την κοινοχρηστη μνημη
         if(strlen(block) > 0)
         {   
             int input = atoi(block);
-            bool done = (strcmp(block,"quit") == 0);
             block[0] = 0;
             printf("Parent process: To paidi mou thelei tin grammi %d\n",input);
             
-            if(done){break;}
-
+            //ανοιγω το αρχειο
             in_file = fopen(filename,"r");
-    
+
             if( in_file == NULL)
             {
                 perror("file FAILED");
@@ -127,6 +135,7 @@ int main(int argc, char* argv[])
 
             char ch[101];
             int l = 0;
+            //βρισκω την γραμμη και τη γραφω στη μνημη
             while(fgets(ch, 100, in_file))
             {
                 l++;
@@ -147,22 +156,16 @@ int main(int argc, char* argv[])
 
             fclose(in_file);
 
-        
-        
-        
+
         }
 
         P--;
-
-
-
-
         
-        sem_post( sem_child);
+        // sem_post( sem_child);
         sem_post(sem_child_2);
     }
     
-
+    //μαζευω ολα τα pid
     for(int i = 0; i < K; i++)
     {
         if(waitpid(pid[i],NULL,0) < 0)
@@ -172,6 +175,7 @@ int main(int argc, char* argv[])
     }
     
 
+    //close semaphores
     sem_close(sem_child);
     sem_close(sem_child_2);
     sem_close(sem_parent);
@@ -180,3 +184,9 @@ int main(int argc, char* argv[])
     detach_memory_block(block);
     free(Lines);
 }
+
+//////////////////////////////////////////////
+//                                          //
+//                  END                     //  
+//                                          //
+//////////////////////////////////////////////

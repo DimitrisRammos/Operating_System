@@ -8,11 +8,11 @@ CFLAGS = -Wall -no-pie -fPIE -g -I$(INCLUDE)
 
 # Αρχεία .o
 INCL = $(INCLUDE)/inclu.h $(INCLUDE)/shared_memory.h
-OBJS = program.o $(MODULES)/shared_memory.o
+OBJS = parent_process.o $(MODULES)/shared_memory.o
 OBJS1 = child_process.o $(MODULES)/shared_memory.o
 
 # the executable program
-EXEC = program
+EXEC = parent_process
 EXEC1 = child_process
 
 # parameters
