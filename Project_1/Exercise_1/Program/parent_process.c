@@ -69,6 +69,11 @@ int main(int argc, char* argv[])
         lines++;
         
     }
+    if( lines == 0)
+    {
+        perror("Wrong lines in file");
+        exit( EXIT_FAILURE);
+    }
     //convert the Lines from int to string for input in the next prorgram(child_process)
     char* Lines = malloc(sizeof(char));
     sprintf(Lines,"%d",lines);
@@ -76,8 +81,19 @@ int main(int argc, char* argv[])
     
     //K is the number for the process
     int K = atoi(argv[2]);
-    pid_t pid[10];
+    if( K <= 0)
+    {
+        perror("Wrong input for process");
+        exit( EXIT_FAILURE);
+    }
+    pid_t pid[K];
 
+    int N = atoi(argv[3]);
+    if( N <= 0)
+    {
+        perror("Wrong input for requests");
+        exit( EXIT_FAILURE);
+    }
 
     //process
     for( int i = 0; i < K; i++)
@@ -109,7 +125,6 @@ int main(int argc, char* argv[])
         return -1;
     }
 
-    int N = atoi(argv[3]);
     int P = K*N; //το P ειναι ποσα request θα γινουν συνολικα προς το πατερα
     while(P>0)
     {   

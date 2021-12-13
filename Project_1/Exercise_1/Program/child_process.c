@@ -55,7 +55,6 @@ int main(int argc, char* argv[])
     int Lines = atoi(argv[2]);  //Lines ποσες γραμμες υπαρχουν
     
     double all_time = 0.0;
-    int t1,t2;
     for( int i = 0; i < N; i++)
     {   
         clock_t start_time = clock();
