@@ -63,7 +63,6 @@ void            ramdiskrw(struct buf*);
 void*           kalloc(void);
 void            kfree(void *);
 void            kinit(void);
-// void            refcounter_( void*);
 void            RefPlus(uint64);
 
 // log.c

@@ -23,12 +23,16 @@ struct {
   struct run *freelist;
 } kmem;
 
+
+//ενα struct with spinlock & refCounter
+//το refCounter ειναι ενας πινακας που δειχνει 
+//για καθε σελιδα τον αριθμο των διεργασιων που δειχνον
+//σε αυτην
 struct {
   struct spinlock lock;
   int refCounter[PHYSTOP/PGSIZE];
 }RefTable;
 
-// struct RefTable ref_table;
 
 
 void
@@ -45,6 +49,10 @@ freerange(void *pa_start, void *pa_end)
   p = (char*)PGROUNDUP((uint64)pa_start);
   for(; p + PGSIZE <= (char*)pa_end; p += PGSIZE)
   {
+
+    //το αρχικοποιηοθμε σε 1 ωστε να μην υπαρχει προβλημα με την kfree
+    //διοτι εχει αλλαξει η kfree ωστε να διαγραφει σελιδες που δεν δειχνει καμια
+    //διεργασια σε αυτες
     RefTable.refCounter[ (uint64)p/PGSIZE] = 1;
     kfree(p);
   }
@@ -68,7 +76,9 @@ kfree(void *pa)
   if(((uint64)pa % PGSIZE) != 0 || (char*)pa < end || (uint64)pa >= PHYSTOP)
     panic("kfree");
 
-
+  //οταν καλουμε την kfree 
+  //εχουμε για καθε σελιδα εναν counter μειωνουμε αυτο το counter 
+  //αν ειναι >=1
   int count;
   acquire(&RefTable.lock);
   count = RefTable.refCounter[(uint64)r/PGSIZE];
@@ -82,8 +92,13 @@ kfree(void *pa)
 
   release(&RefTable.lock);
 
+  //Αν μετα την μειωση ειναι θετικος ακομα αριθμος και οχι ισος με το 0
+  //τοτε δεν διαγραφουμε την σελιδα καθως ακομη υπαρχουν αλλη ή αλλες διεργγασιες
+  //που δειχνουν σε αυτην
   if( count > 0)
     return;
+
+  //Αν ειναι ισο με μηδεν τοτε δεν δειχνει καμια αλλη διεργασια σε αυτην επομενως την διαγραφουμε
 
   // Fill with junk to catch dangling refs.
   memset(pa, 1, PGSIZE);
@@ -96,24 +111,9 @@ kfree(void *pa)
   release(&kmem.lock);
 }
 
-// void
-// refcounter_( void* pa)
-// {
-//   int count;
-//   acquire(&RefTable.lock);
-//   count = RefTable.refCounter[(uint64)pa/PGSIZE];
-//   if(count >=1)
-//   {
-//     RefTable.refCounter[ (uint64)pa/PGSIZE]--;
-//     count = RefTable.refCounter[ (uint64)pa/PGSIZE];
-//   }
 
-//   release(&RefTable.lock);
-
-//   if( count == 0)
-//     kfree( (void*)pa);
-// }
-
+//Η συναρτηση αυτη αυξανει το counter  της συγκεκριμενης σελιδας pa καθως δειχνει 
+//+1 διεργασια σε αυτην
 void 
 RefPlus( uint64 pa)
 {
@@ -144,6 +144,9 @@ kalloc(void)
   {
     kmem.freelist = r->next;
     acquire(&RefTable.lock);
+    
+    //οταν δημιουργω μια καινουρια σελιδα τοτε 
+    //αρχικοποιω τον μετρητη της σε 1
     RefTable.refCounter[ (uint64)r/PGSIZE] = 1;
     release(&RefTable.lock);
   }

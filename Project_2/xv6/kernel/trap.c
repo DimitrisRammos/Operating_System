@@ -34,23 +34,35 @@ trapinithart(void)
 }
 
 
+
+//Η συναρτηση ελεγχει για μια σελιδα καποιους περιορισμους και υστερα
+//δημιουργει με την kalloc μια καινουρια σελιδα μεσω της kalloc που αρχικοποιει
+//τον μετρητη της στη μοναδα(1)
+//επειτα αντιγραφει τα δεδομενα της δοθεισας σελιδας στη νεα
+//τελος δινει τα καταλληλα pte στην καινουρια σελιδα
 int CowFoldHandler( pagetable_t pa, uint64 r)
 {
   pte_t *pte;
  
+  //Αν ειναι μεγαλυτερο του Maxva
   if( r >= MAXVA)
   {
     return -1;
   }
 
+  //παιρνει το pte
   if( (pte = walk( pa, r, 0)) == 0)
     panic("CowFoldHandler: pte should exist");
+  
+  //αν ειναι εγκυρο
   if((*pte & PTE_V) == 0)
     return -1;
 
+  //αν ειναι user
   if((*pte & PTE_U) == 0)
     return -1; 
 
+  //αν το pte μας προρχεται απο cowfault
   if((*pte & PTE_RSW) == 0) 
   {
     return -1;
@@ -62,15 +74,20 @@ int CowFoldHandler( pagetable_t pa, uint64 r)
   uint64 pa_2;
   pa_2 = PTE2PA(*pte);
   
+  //δεσμευω την καινουρια
   uint64 pa_new;
   pa_new = (uint64)kalloc();
   if (pa_new == 0)
     return -1;
 
+  //αντιγραφη των δεδομενων στην καινουρια σελιδας
   memmove( (void*)pa_new, (void*)pa_2, PGSIZE);
 
   *pte = PA2PTE( pa_new)|PTE_R|PTE_W|PTE_V|PTE_U|PTE_X|PTE_RSW;
 
+
+  //Καλω την kfree για την δοθεισα σελιδα ωστε να μειωθει το counter και αν το counter 
+  //μετα την μειωση του ειναι μηδεν τοτε αποδεσμευω την σελιδα
   kfree( (void*)pa_2);
   return 0;
 
@@ -115,8 +132,13 @@ usertrap(void)
 
     syscall();
   }
+  //to r_cause() ειναι 15, αναφερεται στο οτο οτι παει
+  //να γραψεθ σε μια σελιδα που δεν επιτρεπεται να γραψει
   else if( r_scause() == 15)
-  {
+  { 
+
+    //επομενως καλω την συνατηση που εχει δημιουργηθει παραπανω για να ελνξει
+    //και αν μπορει να δημιουργησει καινουρια σελιδα ωστε να γραψει οτι θελει σε αυτην
     int result = CowFoldHandler( p->pagetable, r_stval());
     if(result <0)
     {

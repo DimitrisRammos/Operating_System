@@ -318,25 +318,19 @@ uvmcopy(pagetable_t old, pagetable_t new, uint64 sz)
     flags = PTE_FLAGS(*pte);
     
     //Read ONLY
-    // flags &= ~PTE_W; 
-    
-    //if((mem = kalloc()) == 0)
-    //  goto err;
-
-
-    //h selifa tou goniou na einai kai ayti read only
+    //Η σελιδα ειναι και αυτην read only
     *pte &= ~PTE_W;    
-    //memmove(mem, (char*)pa, PGSIZE);
+    
+    //αυξανω το μετρητη της σελιδας καθω δειχνει +1 διεργασια σε αυτην
     RefPlus( pa);
 
     if(mappages(new, i, PGSIZE, (uint64)pa, flags) != 0){
       // kfree(mem);
       goto err;
     }
+
     *pte |= PTE_RSW;
 
-    //auksisi reference count gia tin page pa
-    
   }
   return 0;
 
@@ -369,6 +363,8 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
   while(len > 0){
     va0 = PGROUNDDOWN(dstva);
 
+
+    //ελεγχω το vao
     if( va0 >= MAXVA)
     {
       return -1;
@@ -377,11 +373,15 @@ copyout(pagetable_t pagetable, uint64 dstva, char *src, uint64 len)
     pte_t* pte;
     pte = walk(pagetable,va0,0);
     
+    //if is zero 
+    //return
     if(pte == 0)
     {
       return -1;
     }
 
+
+    //αν το pte προερχεται απο cowfault
     if(*pte & PTE_RSW) 
     {
       int result = CowFoldHandler( pagetable, va0);
